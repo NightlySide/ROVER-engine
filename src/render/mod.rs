@@ -1,6 +1,6 @@
 pub mod window;
 pub mod camera;
-pub mod pipeline;
+pub mod state;
 pub mod vertex;
 pub mod texture;
 pub mod uniform;
@@ -9,7 +9,7 @@ pub mod light;
 
 use futures::executor::block_on;
 use winit::{event::*, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
-use pipeline::State;
+use state::State;
 
 pub fn run() {
     let title = env!("CARGO_PKG_NAME");
@@ -30,13 +30,13 @@ pub fn run() {
                 ref event,
                 .. // We're not using device_id currently
             } => {
-                state.input(&window, event);
+                state.device_input(&window, event);
             },
             // window events
             Event::WindowEvent {
                 ref event,
                 window_id,
-            } if window_id == window.id() => { 
+            } if window_id == window.id() => if !state.window_input(&window, event) { 
                 match event {
                     WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                     WindowEvent::KeyboardInput { input, .. } => match input {

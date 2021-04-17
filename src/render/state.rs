@@ -71,7 +71,7 @@ impl State {
         // camera
         let camera = camera::Camera::new((0.0, 5.0, 10.0), cgmath::Deg(-90.0), cgmath::Deg(-20.0));
         let projection = camera::Projection::new(swap_chain_desc.width, swap_chain_desc.height, cgmath::Deg(45.0), 0.1, 100.0);
-        let camera_controller = camera::CameraController::new(4.0, 0.4);
+        let camera_controller = camera::CameraController::new(5.0, 0.6);
 
         // uniforms
         let mut uniforms = uniform::Uniforms::new();
@@ -295,7 +295,25 @@ impl State {
             texture::Texture::create_depth_texture(&self.device, &self.swap_chain_desc, "depth_texture");
     }
 
-    pub fn input(&mut self, window: &winit::window::Window, event: &DeviceEvent) -> bool {
+    pub fn window_input(&mut self, window: &winit::window::Window, event: &WindowEvent) -> bool {
+        match event {
+            WindowEvent::MouseInput {
+                button: MouseButton::Left,
+                ..
+            } => {
+                if !self.mouse_capture {
+                    window.set_cursor_grab(true).unwrap();
+                    window.set_cursor_visible(false);
+                    self.mouse_capture = true;
+                    return true;
+                }
+                false
+            }
+            _ => false,
+        }
+    }
+
+    pub fn device_input(&mut self, window: &winit::window::Window, event: &DeviceEvent) -> bool {
         match event {
             DeviceEvent::Key(KeyboardInput {
                 virtual_keycode: Some(key),
@@ -307,6 +325,7 @@ impl State {
                         self.mouse_capture = false;
                         window.set_cursor_grab(false).unwrap();
                         window.set_cursor_visible(true);
+                        println!("Only ungrabbing cursor from window");
                         return true;
                     } 
                 }
@@ -322,9 +341,6 @@ impl State {
             } => {
                 //self.mouse_pressed = *state == ElementState::Pressed;
                 // capture mouse
-                window.set_cursor_grab(true).unwrap();
-                window.set_cursor_visible(false);
-                self.mouse_capture = true;
                 true
             }
             DeviceEvent::MouseMotion { delta } => {
