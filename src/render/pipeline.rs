@@ -35,7 +35,8 @@ pub struct State {
     pub projection: camera::Projection,
     pub camera_controller: camera::CameraController,
     // states
-    pub mouse_pressed: bool,
+    //pub mouse_pressed: bool,
+    pub mouse_capture: bool,
 }
 
 impl State {
@@ -204,7 +205,8 @@ impl State {
             projection,
             camera_controller,
             // states,
-            mouse_pressed: false,
+            //mouse_pressed: false,
+            mouse_capture: false,
         }
     }
 
@@ -293,26 +295,40 @@ impl State {
             texture::Texture::create_depth_texture(&self.device, &self.swap_chain_desc, "depth_texture");
     }
 
-    pub fn input(&mut self, event: &DeviceEvent) -> bool {
+    pub fn input(&mut self, window: &winit::window::Window, event: &DeviceEvent) -> bool {
         match event {
             DeviceEvent::Key(KeyboardInput {
                 virtual_keycode: Some(key),
                 state,
                 ..
-            }) => self.camera_controller.process_keyboard(*key, *state),
+            }) => {
+                if !self.camera_controller.process_keyboard(*key, *state) {
+                    if *key == VirtualKeyCode::Escape && self.mouse_capture {
+                        self.mouse_capture = false;
+                        window.set_cursor_grab(false).unwrap();
+                        window.set_cursor_visible(true);
+                        return true;
+                    } 
+                }
+                false
+            },
             DeviceEvent::MouseWheel { delta, .. } => {
                 self.camera_controller.process_scroll(delta);
                 true
             }
             DeviceEvent::Button {
                 button: 1, // Left Mouse Button
-                state,
+                state: _,
             } => {
-                self.mouse_pressed = *state == ElementState::Pressed;
+                //self.mouse_pressed = *state == ElementState::Pressed;
+                // capture mouse
+                window.set_cursor_grab(true).unwrap();
+                window.set_cursor_visible(false);
+                self.mouse_capture = true;
                 true
             }
             DeviceEvent::MouseMotion { delta } => {
-                if self.mouse_pressed {
+                if self.mouse_capture {
                     self.camera_controller.process_mouse(delta.0, delta.1);
                 }
                 true

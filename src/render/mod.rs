@@ -30,7 +30,7 @@ pub fn run() {
                 ref event,
                 .. // We're not using device_id currently
             } => {
-                state.input(event);
+                state.input(&window, event);
             },
             // window events
             Event::WindowEvent {
