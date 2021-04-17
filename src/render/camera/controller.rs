@@ -46,7 +46,6 @@ impl CameraController {
         };
         match key {
             VirtualKeyCode::Z | VirtualKeyCode::Up => {
-                println!("Pressed forward!");
                 self.amount_forward = amount;
                 true
             }

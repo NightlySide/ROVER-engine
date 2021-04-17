@@ -5,13 +5,17 @@ layout(location=1) in vec3 a_color;
 
 layout(location=0) out vec3 v_color;
 
-layout(set=1, binding=0) 
+// camera
+layout(set=0, binding=0) 
 uniform Uniforms {
-    vec3 u_view_position; 
+    vec4 u_view_position; // unused
     mat4 u_view_proj;
 };
 
 void main() {
+    // color
     v_color = a_color;
-    gl_Position = vec4(a_position, 1.0);
+
+    // camera position
+    gl_Position = u_view_proj * vec4(a_position, 1.0);
 }
