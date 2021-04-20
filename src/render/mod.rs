@@ -6,6 +6,7 @@ pub mod texture;
 pub mod uniform;
 pub mod instance;
 pub mod light;
+pub mod terrain;
 
 use futures::executor::block_on;
 use winit::{event::*, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};

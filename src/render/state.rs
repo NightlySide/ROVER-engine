@@ -2,7 +2,7 @@ use vertex::Vertex;
 use wgpu::util::DeviceExt;
 use winit::{event::*, window::Window};
 use cgmath::*;
-use super::{camera, uniform, vertex, light, texture};
+use super::{camera, uniform, vertex, light, texture, terrain};
 
 pub struct State {
     // swap chain
@@ -37,6 +37,8 @@ pub struct State {
     // states
     //pub mouse_pressed: bool,
     pub mouse_capture: bool,
+    // data
+    pub num_index: u32,
 }
 
 impl State {
@@ -84,18 +86,25 @@ impl State {
             color: [1.0, 1.0, 1.0],
         };
 
+        // data
+        let chunk = terrain::Chunk::new();
+        let (vertices, indices) = chunk.create_mesh();
+        let vertices: &[vertex::ColorVertex] = &vertices.as_slice();
+        let indices: &[u16] = &indices.as_slice();
+        let num_index = indices.len() as u32;
+
         // buffers
         let vertex_buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor{
                 label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(super::vertex::VERTICES),
+                contents: bytemuck::cast_slice(vertices),
                 usage: wgpu::BufferUsage::VERTEX,
             }
         );
         let index_buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor{
                 label: Some("Indices Buffer"),
-                contents: bytemuck::cast_slice(super::vertex::INDICES),
+                contents: bytemuck::cast_slice(indices),
                 usage: wgpu::BufferUsage::INDEX,
             }
         );
@@ -207,6 +216,8 @@ impl State {
             // states,
             //mouse_pressed: false,
             mouse_capture: false,
+            // data
+            num_index,
         }
     }
 
@@ -261,7 +272,7 @@ impl State {
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleList,
                 strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw,
+                front_face: wgpu::FrontFace::Cw,
                 cull_mode: wgpu::CullMode::Back,
                 // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
                 polygon_mode: wgpu::PolygonMode::Fill,
@@ -417,7 +428,9 @@ impl State {
         render_pass.set_bind_group(0, &self.uniform_bind_group, &[]);
         render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-        render_pass.draw_indexed(0..super::vertex::INDICES.len() as u32, 0, 0..1);
+        render_pass.draw_indexed(0..self.num_index, 0, 0..1);
+
+        // render lightt
 
         // we need to drop the render pass in order to avoid a memory leak
         drop(render_pass); // the commands has already be sent to the encoder
