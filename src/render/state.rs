@@ -87,7 +87,7 @@ impl State {
         };
 
         // data
-        let chunk = terrain::Chunk::new();
+        let chunk = terrain::chunk::Chunk::new();
         let (vertices, indices) = chunk.create_mesh();
         let vertices: &[vertex::ColorVertex] = &vertices.as_slice();
         let indices: &[u16] = &indices.as_slice();

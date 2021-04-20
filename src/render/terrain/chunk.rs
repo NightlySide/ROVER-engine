@@ -1,29 +1,9 @@
-use super::vertex::ColorVertex;
+use crate::render::vertex::ColorVertex;
+use super::block::{Block, HALF_BLOCK_SIZE, BlockType};
+use super::noise;
 
-pub const HALF_BLOCK_SIZE: f32 = 0.25;
 pub const CHUNK_WIDTH: usize = 16;
 pub const CHUNK_HEIGHT: usize = 32;
-
-#[derive(Clone, Copy, std::cmp::PartialEq)]
-pub enum BlockType {
-    AIR = 0,
-    STONE = 1,
-}
-
-#[derive(Clone, Copy)]
-pub struct Block {
-    pub is_active: bool,
-    pub block_type: BlockType,
-}
-
-impl Block {
-    pub fn new() -> Self {
-        Block {
-            is_active: false,
-            block_type: BlockType::STONE,
-        }
-    }
-}
 
 pub struct Chunk {
     pub width: usize,
@@ -33,10 +13,22 @@ pub struct Chunk {
 
 impl Chunk {
     pub fn new() -> Self {
+        let noise_gen = noise::NoiseGenerator::from_seed(1337);
+        let mut blocks = [[[Block::new(); CHUNK_WIDTH]; CHUNK_HEIGHT]; CHUNK_WIDTH];
+        for x in 0..CHUNK_WIDTH {
+            for z in 0..CHUNK_WIDTH {
+                let noise_value = noise_gen.get(x as f64 / 16.0, z as f64 / 16.0) * CHUNK_HEIGHT as f64;
+                for y in 0..CHUNK_HEIGHT {
+                    blocks[x][y][z].block_type = if y as f64 > noise_value {
+                        BlockType::AIR
+                    } else { BlockType::STONE };
+                }
+            }
+        }
         Chunk {
             width: CHUNK_WIDTH,
             height: CHUNK_HEIGHT,
-            blocks: [[[Block::new(); CHUNK_WIDTH]; CHUNK_HEIGHT]; CHUNK_WIDTH],
+            blocks,
         }
     }
 
